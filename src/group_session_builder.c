@@ -187,9 +187,11 @@ int get_sender_key_public(group_session_builder *builder, ec_public_key **public
     int result = 0;
     sender_key_record *record = 0;
     sender_key_state *state = 0;
+    ec_public_key *signing_key_public = 0;
 
     assert(builder);
     assert(builder->store);
+    signal_lock(builder->global_context);
 
     result = signal_protocol_sender_key_load_key(builder->store, &record, sender_key_name);
     if(result < 0) {
@@ -201,9 +203,16 @@ int get_sender_key_public(group_session_builder *builder, ec_public_key **public
         goto complete;
     }
 
-    *public_key = sender_key_state_get_signing_key_public(state);
+    signing_key_public = sender_key_state_get_signing_key_public(state);
+    *public_key = malloc(32);
+        if(!(*public_key)) {
+        result = SG_ERR_NOMEM;
+        goto complete;
+    }
+    memcpy(*public_key, signing_key_public, 32);
 complete:
     SIGNAL_UNREF(record);
+    signal_unlock(builder->global_context);
     return result;
 }
 
