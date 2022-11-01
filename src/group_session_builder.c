@@ -191,6 +191,7 @@ int get_sender_key_public(group_session_builder *builder,
 
     assert(builder);
     assert(builder->store);
+    signal_lock(builder->global_context);
 
     result = signal_protocol_sender_key_load_key(builder->store, &record, sender_key_name);
     if(result < 0) {
@@ -208,6 +209,7 @@ int get_sender_key_public(group_session_builder *builder,
     }
 complete:
     SIGNAL_UNREF(record);
+    signal_unlock(builder->global_context);
     return result;
 }
 
